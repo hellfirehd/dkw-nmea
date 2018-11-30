@@ -1,0 +1,188 @@
+﻿/*
+DKW.NMEA
+Copyright (C) 2018 Doug Wilson
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+namespace DKW.NMEA
+{
+    using System;
+    using System.Buffers;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.IO.Pipelines;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using DKW.NMEA.GPS;
+
+    public class NmeaStreamReader
+    {
+        public static Byte ByteLF = (Byte)'\n';
+        private List<NmeaMessage> _parsers = new List<NmeaMessage>();
+
+        public Int32 LineCount { get; private set; }
+        public Int64 BytesReceived { get; private set; }
+        public Int64 BytesRead { get; private set; }
+
+        public static NmeaStreamReader Create()
+        {
+            var nsr = new NmeaStreamReader();
+
+            nsr.Register(new GGA());
+            nsr.Register(new GSA());
+            nsr.Register(new GSV());
+            nsr.Register(new RMC());
+            nsr.Register(new GLL());
+
+            return nsr;
+        }
+
+        public NmeaStreamReader Register(NmeaMessage parser)
+        {
+            if (parser == null)
+                throw new ArgumentNullException(nameof(parser));
+
+            _parsers.Add(parser);
+
+            return this;
+        }
+
+        public async Task ParseStreamAsync(Stream stream, Action<NmeaMessage> callback, CancellationToken cancellationToken = default)
+        {
+            if (_parsers.Count == 0)
+            {
+                throw new InvalidOperationException("At least one parser must be registered in this instance before parsing may begin.");
+            }
+
+            var pipe = new Pipe();
+            var writing = FillPipeAsync(stream, pipe.Writer, cancellationToken);
+            var reading = ReadPipeAsync(pipe.Reader, callback, cancellationToken);
+
+            await Task.WhenAll(reading, writing).ConfigureAwait(false);
+        }
+
+        private async Task FillPipeAsync(Stream stream, PipeWriter writer, CancellationToken cancellationToken = default)
+        {
+            const Int32 minimumBufferSize = 512;
+            while (true)
+            {
+                try
+                {
+                    // Allocate at least 512 bytes from the PipeWriter. NOTE: NMEA sentences must be less than 80 bytes.
+                    var memory = writer.GetMemory(minimumBufferSize);
+
+                    var bytesRead = await stream.ReadAsync(memory, cancellationToken).ConfigureAwait(false);
+                    BytesReceived += bytesRead;
+                    if (bytesRead == 0)
+                    {
+                        break;
+                    }
+
+                    // Tell the PipeWriter how much was read from the Stream
+                    writer.Advance(bytesRead);
+
+                    // Make the data available to the PipeReader
+                    var result = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                    if (result.IsCompleted || cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+
+            // Tell the PipeReader that there's no more data coming
+            writer.Complete();
+        }
+
+        private async Task ReadPipeAsync(PipeReader reader, Action<NmeaMessage> callback, CancellationToken cancellationToken = default)
+        {
+            while (true)
+            {
+                try
+                {
+                    var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+
+                    var buffer = result.Buffer;
+                    SequencePosition? position = null;
+
+                    do
+                    {
+                        // Look for a EOL in the buffer
+                        position = buffer.PositionOf(ByteLF);
+
+                        if (position != null)
+                        {
+                            // Process the line
+                            if (ParseSentence(buffer.Slice(0, position.Value), out var message))
+                            {
+                                callback(message);
+                            }
+
+                            // Skip the line + the \n character (basically position)
+                            buffer = buffer.Slice(buffer.GetPosition(1, position.Value));
+                        }
+                    }
+                    while (position != null && !cancellationToken.IsCancellationRequested);
+
+                    // Tell the PipeReader how much of the buffer we have consumed
+                    reader.AdvanceTo(buffer.Start, buffer.End);
+
+                    // Stop reading if there's no more data coming
+                    if (result.IsCompleted || cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+
+            // Mark the PipeReader as complete
+            reader.Complete();
+        }
+
+        private Boolean ParseSentence(ReadOnlySequence<Byte> payload, out NmeaMessage sentence)
+        {
+            sentence = default;
+
+            LineCount++;
+            BytesRead += payload.Length;
+
+            foreach (var p in _parsers)
+            {
+                if (p.CanHandle(payload))
+                {
+                    try
+                    {
+                        sentence = p.Parse(payload);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Error Processing Line {LineCount}.  See InnerException for details.", ex);
+                    }
+                }
+            }
+
+            return false;
+        }
+    }
+}

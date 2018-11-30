@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <GenerateAssemblyVersionAttribute>true</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>true</GenerateAssemblyFileVersionAttribute>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="track1.nmea" />
+    <None Remove="track2.nmea" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="track1.nmea" />
+    <EmbeddedResource Include="track2.nmea" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GitVersionTask" Version="4.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DKW.NMEA\DKW.NMEA.csproj" />
+  </ItemGroup>
+
+</Project>
