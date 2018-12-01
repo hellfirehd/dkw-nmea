@@ -17,14 +17,19 @@ before_build:
   # Display .NET Core version
   - cmd: dotnet --version
   # Display minimal restore text
-  - cmd: dotnet restore ./DKW.NMEA/DKW.NMEA.csproj --verbosity m
+  - cmd: dotnet restore --verbosity m
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
-  - ps: $Output = & gitversion /nofetch | Out-String
-  - ps: $version = $output | ConvertFrom-Json
 
 build_script:
-  - ps: dotnet build -c Release /p:Version=$version.AssemblySemVer;AssemblyVersion=$version.AssemblySemFileVer
-  - ps: dotnet pack -c Release /p:Version=$version.AssemblySemVer;PackageVersion=$version.NuGetVersionV2
+  - ps: $output = & gitversion /nofetch | Out-String
+  - ps: $version = $output | ConvertFrom-Json
+  - ps: $assemblyVersion = $version.AssemblySemver
+  - ps: $assemblyFileVersion = $version.AssemblySemver
+  - ps: $assemblyInformationalVersion = ($version.SemVer + "/" + $version.Sha)
+  - ps: $nugetVersion = $version.NuGetVersionV2
+  - ps: dotnet build -c Release /p:Version=$assemblyVersion /p:AssemblyVersion=$assemblyFileVersion
+  - ps: dotnet pack -c Release /p:Version=$assemblyVersion /p:PackageVersion=$nugetVersion
+
 artifacts:
 - path: "**/*.nupkg"
   name: NuGet
