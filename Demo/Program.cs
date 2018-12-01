@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-namespace TestApp
+namespace Demo
 {
     using System;
     using System.Diagnostics;
@@ -56,7 +56,7 @@ namespace TestApp
                     {
                         break;
                     }
-                    Console.WriteLine($"State 2 {++count}: {message}");
+                    Console.WriteLine($"Stage 2 {++count}: {message}");
                 }
             }
 
