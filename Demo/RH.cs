@@ -22,7 +22,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 
-namespace TestApp
+namespace Demo
 {
     [DebuggerStepThrough]
     internal static class RH
