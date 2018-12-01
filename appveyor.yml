@@ -31,7 +31,7 @@ build_script:
   - ps: dotnet pack -c Release /p:Version=$assemblyVersion /p:PackageVersion=$nugetVersion
 
 artifacts:
-- path: "**/*.nupkg"
+- path: "./DKW.NMEA/**/*.nupkg"
   name: NuGet
 
 deploy:
