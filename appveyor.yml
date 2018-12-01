@@ -1,10 +1,14 @@
 image: Visual Studio 2017
 
-configuration: Release
-
 branches:
   only:
   - master
+  - develop
+
+cache:
+  - packages -> **\packages.config
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
 
 install:
   - choco install gitversion.portable -pre -y
@@ -15,13 +19,14 @@ before_build:
   # Display minimal restore text
   - cmd: dotnet restore ./DKW.NMEA/DKW.NMEA.csproj --verbosity m
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
+  - ps: $Output = & gitversion /nofetch | Out-String
+  - ps: $version = $output | ConvertFrom-Json
 
 build_script:
-  - cmd: dotnet build ./DKW.NMEA/DKW.NMEA.csproj -c %CONFIGURATION%
-  - cmd: dotnet pack -c %CONFIGURATION% /p:PackageVersion="%GitVersion_NuGetVersion%"
-
+  - ps: dotnet build -c Release /p:Version=$version.AssemblySemVer;AssemblyVersion=$version.AssemblySemFileVer
+  - ps: dotnet pack -c Release /p:Version=$version.AssemblySemVer;PackageVersion=$version.NuGetVersionV2
 artifacts:
-- path: ./DKW.NMEA/bin/Release/*.nupkg
+- path: "**/*.nupkg"
   name: NuGet
 
 deploy:
@@ -30,5 +35,3 @@ deploy:
     secure: oKBi9hZNM35lgEr9CbJA5yJHMMdNzBiC0BeTCfTVf4yQhgJ1lytVf57/dV9yk3bo
   skip_symbols: false
   artifact: /.*\.nupkg/
-  on:
-    branch: master
