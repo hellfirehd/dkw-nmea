@@ -1,10 +1,14 @@
 image: Visual Studio 2017
 
-configuration: Release
-
 branches:
   only:
   - master
+  - develop
+
+cache:
+  - packages -> **\packages.config
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
 
 install:
   - choco install gitversion.portable -pre -y
@@ -13,15 +17,21 @@ before_build:
   # Display .NET Core version
   - cmd: dotnet --version
   # Display minimal restore text
-  - cmd: dotnet restore ./DKW.NMEA/DKW.NMEA.csproj --verbosity m
+  - cmd: dotnet restore --verbosity m
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 
 build_script:
-  - cmd: dotnet build ./DKW.NMEA/DKW.NMEA.csproj -c %CONFIGURATION%
-  - cmd: dotnet pack -c %CONFIGURATION% /p:PackageVersion="%GitVersion_NuGetVersion%"
+  - ps: $output = & gitversion /nofetch | Out-String
+  - ps: $version = $output | ConvertFrom-Json
+  - ps: $assemblyVersion = $version.AssemblySemver
+  - ps: $assemblyFileVersion = $version.AssemblySemver
+  - ps: $assemblyInformationalVersion = ($version.SemVer + "/" + $version.Sha)
+  - ps: $nugetVersion = $version.NuGetVersionV2
+  - ps: dotnet build -c Release /p:Version=$assemblyVersion /p:AssemblyVersion=$assemblyFileVersion
+  - ps: dotnet pack -c Release /p:Version=$assemblyVersion /p:PackageVersion=$nugetVersion
 
 artifacts:
-- path: ./DKW.NMEA/bin/Release/*.nupkg
+- path: "./DKW.NMEA/**/*.nupkg"
   name: NuGet
 
 deploy:
@@ -30,5 +40,3 @@ deploy:
     secure: oKBi9hZNM35lgEr9CbJA5yJHMMdNzBiC0BeTCfTVf4yQhgJ1lytVf57/dV9yk3bo
   skip_symbols: false
   artifact: /.*\.nupkg/
-  on:
-    branch: master

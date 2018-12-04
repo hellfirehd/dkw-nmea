@@ -6,16 +6,14 @@
     <LangVersion>7.3</LangVersion>
     <RootNamespace>DNW.NMEA.Tests</RootNamespace>
     <AssemblyName>DNW.NMEA.Tests</AssemblyName>
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <GenerateAssemblyVersionAttribute>true</GenerateAssemblyVersionAttribute>
-    <GenerateAssemblyFileVersionAttribute>true</GenerateAssemblyFileVersionAttribute>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <RootNamespace>DKW</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitVersionTask" Version="4.0.0">
+    <PackageReference Include="GitVersionTask" Version="4.0.1-beta1-50">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
