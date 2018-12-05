@@ -26,19 +26,28 @@ namespace DKW.NMEA
     using System.Threading;
     using System.Threading.Tasks;
     using DKW.NMEA.GPS;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Logging.Abstractions;
 
     public class NmeaStreamReader
     {
         public static Byte ByteLF = (Byte)'\n';
         private List<NmeaMessage> _parsers = new List<NmeaMessage>();
+        private readonly ILogger<NmeaStreamReader> _logger;
 
         public Int32 LineCount { get; private set; }
         public Int64 BytesReceived { get; private set; }
         public Int64 BytesRead { get; private set; }
 
-        public static NmeaStreamReader Create()
+
+        public NmeaStreamReader(ILogger<NmeaStreamReader> logger = null)
         {
-            var nsr = new NmeaStreamReader();
+            _logger = logger ?? new NullLogger<NmeaStreamReader>();
+        }
+
+        public static NmeaStreamReader Create(ILogger<NmeaStreamReader> logger = null)
+        {
+            var nsr = new NmeaStreamReader(logger);
 
             nsr.Register(new GGA());
             nsr.Register(new GSA());
@@ -49,12 +58,14 @@ namespace DKW.NMEA
             return nsr;
         }
 
-        public NmeaStreamReader Register(NmeaMessage parser)
+        public NmeaStreamReader Register(params NmeaMessage[] parsers)
         {
-            if (parser == null)
-                throw new ArgumentNullException(nameof(parser));
+            if (parsers == null)
+                throw new ArgumentNullException(nameof(parsers));
+            if (parsers.Length == 0)
+                throw new ArgumentException("At least one parser must be provided.", nameof(parsers));
 
-            _parsers.Add(parser);
+            _parsers.AddRange(parsers);
 
             return this;
         }
@@ -170,6 +181,7 @@ namespace DKW.NMEA
             {
                 if (p.CanHandle(payload))
                 {
+                    _logger.LogTrace($"Parsing Line {LineCount} with {p.GetType().Name}.");
                     try
                     {
                         sentence = p.Parse(payload);
@@ -177,8 +189,10 @@ namespace DKW.NMEA
                     }
                     catch (Exception ex)
                     {
-                        throw new Exception($"Error Processing Line {LineCount}.  See InnerException for details.", ex);
+                        _logger.LogError(ex, $"Error Processing Line {LineCount}.");
                     }
+
+                    break;
                 }
             }
 
