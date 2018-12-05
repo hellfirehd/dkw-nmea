@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-namespace DKW.NMEA.Parsing
+namespace DKW.NMEA
 {
     using System;
     using System.Buffers;
@@ -24,7 +24,7 @@ namespace DKW.NMEA.Parsing
     using System.Runtime.CompilerServices;
     using System.Text;
 
-    public static class Extensions
+    public static class ReadOnlySequenceExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static String ToString(in this ReadOnlySequence<Byte> buffer, Encoding encoding)
