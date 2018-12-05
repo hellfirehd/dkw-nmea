@@ -1,10 +1,5 @@
 image: Visual Studio 2017
 
-branches:
-  only:
-  - master
-  - develop
-
 cache:
   - packages -> **\packages.config
   - C:\ProgramData\chocolatey\bin -> appveyor.yml
