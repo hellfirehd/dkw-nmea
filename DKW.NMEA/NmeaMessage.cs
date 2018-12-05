@@ -16,11 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-namespace DKW
+namespace DKW.NMEA
 {
     using System;
     using System.Buffers;
-    using DKW.NMEA.Parsing;
 
     public abstract class NmeaMessage
     {

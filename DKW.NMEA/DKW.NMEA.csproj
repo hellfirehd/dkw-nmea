@@ -22,7 +22,7 @@
     <AssemblyName>DKW.NMEA</AssemblyName>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <RootNamespace>DKW</RootNamespace>
+    <RootNamespace>DKW.NMEA</RootNamespace>
   </PropertyGroup>
   
   <ItemGroup>
