@@ -163,16 +163,15 @@ namespace DKW.NMEA
 
             LineCount++;
             BytesRead += payload.Length;
-            if (_logger.IsEnabled(LogLevel.Trace))
-            {
-                _logger.LogTrace(payload.ToString(Encoding.UTF8));
-            }
 
             foreach (var p in _parsers)
             {
                 if (p.CanHandle(payload))
                 {
-                    _logger.LogTrace($"Parsing Line {LineCount} with {p.GetType().Name}.");
+                    if (_logger.IsEnabled(LogLevel.Trace))
+                    {
+                        _logger.LogTrace($"Parsing Line {LineCount} with {p.GetType().Name}: {payload.ToString(Encoding.UTF8)}");
+                    }
                     try
                     {
                         message = p.Parse(payload);
