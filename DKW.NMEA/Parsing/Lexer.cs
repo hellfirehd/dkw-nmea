@@ -26,44 +26,53 @@ namespace DKW.NMEA.Parsing
     public partial class Lexer
     {
         private static readonly ReadOnlySequence<Byte> Empty = ReadOnlySequence<Byte>.Empty;
+        private const Byte Asterisk = (Byte)'*';
 
         private ReadOnlySequence<Byte> _sequence;
         private Int64 _index;
         private Byte _currentByte;
+        private Boolean _eol = false;
 #if DEBUG
         private Char _currentChar;
+        private String _sentence;
+        private String _sentencePointer;
 #endif
 
         public Lexer(ReadOnlySequence<Byte> sequence)
         {
             _sequence = sequence;
-            _index = 0L;
-            _currentByte = CharAt(_index);
+#if DEBUG
+            _sentence = sequence.ToString(Encoding.UTF8);
+#endif
+            Start();
         }
 
         internal Exception Error() => new Exception($"Did not expect '{(Char)_currentByte}' at position {_index + 1}.");
+        internal Exception ZeroLength() => new Exception($"Token with Zero length at position {_index + 1}.");
 
         private void Advance()
         {
             _index++;
-            _currentByte = CharAt(_index);
+            _currentByte = ByteAt(_index);
+            if (_currentByte == Asterisk) { _eol = true; }
 #if DEBUG
-            _currentChar = (Char)Current();
+            _currentChar = (Char)_currentByte;
+            _sentencePointer = new String(' ', (Int32)_index) + "^";
 #endif
         }
 
-        public Byte Current()
+        private void Advance(Func<Boolean> predicate)
         {
-            return CharAt(_index);
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate));
+
+            while (predicate())
+            {
+                Advance();
+            }
         }
 
-        private Byte Peek()
-        {
-            var peekPos = _index + 1;
-            return CharAt(peekPos);
-        }
-
-        private Byte CharAt(Int64 index)
+        private Byte ByteAt(Int64 index)
         {
             if (index > _sequence.Length - 1) return 0;
 
@@ -73,235 +82,230 @@ namespace DKW.NMEA.Parsing
             return candidate.First.Span[0];
         }
 
-        public Token NextToken()
+        public Boolean EOL => _eol;
+
+        public Byte Current => _currentByte;
+
+        public Byte Peek()
         {
-            SkipWhiteSpace();
+            var peekPos = _index + 1;
+            return ByteAt(peekPos);
+        }
 
-            while (_currentByte != 0)
-            {
-
-                if (IsNumber(_currentByte))
-                {
-                    return new Token(_index, TokenType.Number, Number());
-                }
-
-                if (IsLetter(_currentByte))
-                {
-                    return new Token(_index, TokenType.String, String());
-                }
-
-                if (_currentByte == '$')
-                {
-                    Advance();
-                    return new Token(_index, TokenType.Dollar);
-                }
-
-                if (_currentByte == ',')
-                {
-                    Advance();
-                    return new Token(_index, TokenType.Comma);
-                }
-
-                if (_currentByte == '*')
-                {
-                    Advance();
-                    return new Token(_index, TokenType.Asterisk);
-                }
-
-                Error();
-            }
-
-            return new Token(_index, TokenType.EOF);
+        public void Start()
+        {
+            _index = 0L;
+            _currentByte = ByteAt(_index);
+            ConsumeWhiteSpaceAndSeparator();
         }
 
         public Char NextChar()
         {
-            SkipWhiteSpaceAndSeparator();
-
-            return Char();
-        }
-
-        public String NextString()
-        {
-            SkipWhiteSpaceAndSeparator();
-            return String();
-        }
-
-        public Double NextDouble()
-        {
-            SkipWhiteSpaceAndSeparator();
-            return Number();
-        }
-
-        public Int32 NextInteger()
-        {
-            SkipWhiteSpaceAndSeparator();
-            return Integer();
-        }
-
-        public Int32 NextHexadecimal()
-        {
-            SkipWhiteSpaceAndSeparator();
-            return Hexadecimal();
-        }
-
-        public TimeSpan NextTimeSpan()
-        {
-            SkipWhiteSpaceAndSeparator();
-            return TimeSpan();
-        }
-
-        public Double NextLatitude()
-        {
-            SkipWhiteSpaceAndSeparator();
-            return Latitude();
-        }
-
-        public Double NextLongitude()
-        {
-            SkipWhiteSpaceAndSeparator();
-            return Longitude();
-        }
-
-        public DateTime NextDate()
-        {
-            SkipWhiteSpaceAndSeparator();
-            return Date();
-        }
-
-        public Int32 NextChecksum()
-        {
-            SkipToChecksum();
-            return Hexadecimal();
-        }
-
-        private Boolean IsWhiteSpace(Byte b) => b == ' ' || b == '\t';
-        private Boolean IsSeparator(Byte b) => b == ',' || b == '*' || b == '$';
-        private Boolean IsDigit(Byte b) => (b >= '0' && b <= '9');
-        private Boolean IsNumber(Byte b) => (b >= '0' && b <= '9') || b == '-' || b == '.';
-        private Boolean IsLetter(Byte b) => (b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z');
-
-        private void SkipWhiteSpace()
-        {
-            while (_currentByte != 0 && IsWhiteSpace(_currentByte))
-            {
+            ConsumeWhiteSpace();
+            if (IsSeparator(_currentByte)) {
+                // Consume the separator
                 Advance();
-            }
-        }
 
-        private void SkipWhiteSpaceAndSeparator()
-        {
-            while (_currentByte != 0 && IsWhiteSpace(_currentByte))
-            {
-                Advance();
+                return Char.MinValue;
             }
 
-            if (IsSeparator(_currentByte))
-                Advance();
-        }
-
-        private void SkipToChecksum()
-        {
-            while (_currentByte != 0 && !(_currentByte == '*'))
-            {
-                Advance();
-            }
-            Advance();
-        }
-
-        private Char Char()
-        {
             var c = (Char)_currentByte;
+            // Consume Character
+            Advance();
+
+            // Consume the separator
             Advance();
             return c;
         }
 
-        private String String()
+        public String NextString()
         {
-            var start = _index;
-            while (_currentByte > 0 && IsLetter(_currentByte))
+            ConsumeWhiteSpace();
+
+            if (IsSeparator(_currentByte))
             {
+                // Consume the separator
                 Advance();
+                return String.Empty;
             }
 
-            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
+            var start = _index;
+            Advance(() => _currentByte > 0 && IsLetter(_currentByte));
 
+            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
+            if (slice.Length == 0)
+            {
+                // This should never happen
+                throw ZeroLength();
+            }
+
+            // Consume the separator
+            Advance();
             return slice.ToString(Encoding.UTF8);
         }
 
-        private Int32 Integer()
+        public Double NextDouble()
         {
-            var start = _index;
-            while (_currentByte > 0 && IsNumber(_currentByte))
+            ConsumeWhiteSpace();
+
+            if (IsSeparator(_currentByte))
             {
+                // Consume the separator
                 Advance();
-            }
-
-            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
-            if (slice.Length == 0)
-            {
-                return 0;
-            }
-
-            if (slice.TryParse(out Int32 value))
-            {
-                return value;
-            }
-
-            throw Error();
-        }
-
-        private Double Number()
-        {
-            var start = _index;
-            while (_currentByte > 0 && IsNumber(_currentByte))
-            {
-                Advance();
-            }
-
-            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
-            if (slice.Length == 0)
-            {
                 return Double.NaN;
+            }
+
+            var start = _index;
+            Advance(() => _currentByte > 0 && IsNumber(_currentByte));
+
+            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
+            if (slice.Length == 0)
+            {
+                // This should never happen
+                throw ZeroLength();
             }
 
             if (slice.TryParse(out Double value))
             {
+                // Consume the separator
+                Advance();
                 return value;
             }
 
             throw Error();
         }
 
-        private Int32 Hexadecimal()
+        public Int32 NextInteger()
         {
-            var start = _index;
-            while (_currentByte > 0 && (IsDigit(_currentByte) || IsLetter(_currentByte)))
+            ConsumeWhiteSpace();
+            if (IsSeparator(_currentByte))
             {
+                // Consume the separator
                 Advance();
+                return 0;
             }
+
+            var start = _index;
+            Advance(() => _currentByte > 0 && IsNumber(_currentByte));
 
             var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
             if (slice.Length == 0)
             {
-                return 0;
+                // This should never happen
+                throw ZeroLength();
             }
 
-            if (slice.TryParseHex(out var value))
+            if (slice.TryParse(out Int32 value))
             {
+                // Consume the separator
+                Advance();
                 return value;
             }
 
             throw Error();
         }
 
-        private Double Latitude()
+        public Int32 NextHexadecimal()
         {
+            ConsumeWhiteSpace();
+            if (IsSeparator(_currentByte))
+            {
+                // Consume the separator
+                Advance();
+                return 0;
+            }
+
+            var start = _index;
+            Advance(() => _currentByte > 0 && (IsDigit(_currentByte) || IsLetter(_currentByte)));
+
+            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
+            if (slice.Length == 0)
+            {
+                // This should never happen
+                throw ZeroLength();
+            }
+
+            if (slice.TryParseHex(out var value))
+            {
+                // Consume the separator
+                Advance();
+                return value;
+            }
+
+            throw Error();
+        }
+
+        public TimeSpan NextTimeSpan()
+        {
+            ConsumeWhiteSpace();
+            if (IsSeparator(_currentByte))
+            {
+                // Consume the separator
+                Advance();
+                return TimeSpan.Zero;
+            }
+
             var start = _index;
             while (_currentByte > 0 && IsNumber(_currentByte))
             {
                 Advance();
             }
+
+            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
+            if (slice.Length == 4)
+            {
+                return TimeSpan.Zero;
+            }
+
+            if (slice.Length < 6)
+            {
+                return TimeSpan.Zero;
+            }
+
+            if (slice.Slice(0, 2).TryParse(out Int32 hours))
+            {
+                if (slice.Slice(2, 2).TryParse(out Int32 mintues))
+                {
+                    if (slice.Slice(4).TryParse(out Double seconds))
+                    {
+                        // Consume the separator
+                        Advance();
+                        return new TimeSpan(hours, mintues, 0).Add(TimeSpan.FromSeconds(seconds));
+                    }
+                }
+            }
+
+            throw Error();
+        }
+
+        public Double NextLatitude()
+        {
+            ConsumeWhiteSpace();
+            if (IsSeparator(_currentByte))
+            {
+                // Consume the separator
+                Advance();
+                // Next up should be a Direction
+                if (IsLetter(Peek()))
+                {
+                    // Consume
+                    Advance();
+                }
+                // And then the next separator...
+                if (IsSeparator(_currentByte))
+                {
+                    Advance();
+                }
+                else
+                {
+                    throw Error();
+                }
+
+                return Double.NaN;
+            }
+
+            var start = _index;
+            Advance(() => _currentByte > 0 && IsNumber(_currentByte));
 
             var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
             if (slice.Length < 3)
@@ -313,15 +317,14 @@ namespace DKW.NMEA.Parsing
             {
                 if (slice.Slice(2).TryParse(out Double d))
                 {
-                    Advance(); // Eat the separator
-                    if (_currentByte == 'N')
+                    Advance();
+                    var c = NextChar();  // Also consumes next separator
+                    if (c == 'N')
                     {
-                        Advance(); // Eat the N
                         return i + d / 60;
                     }
-                    else if (_currentByte == 'S')
+                    else if (c == 'S')
                     {
-                        Advance(); // Eat the S
                         return (i + d / 60) * -1;
                     }
                 }
@@ -330,13 +333,34 @@ namespace DKW.NMEA.Parsing
             throw Error();
         }
 
-        private Double Longitude()
+        public Double NextLongitude()
         {
-            var start = _index;
-            while (_currentByte > 0 && IsNumber(_currentByte))
+            ConsumeWhiteSpace();
+            if (IsSeparator(_currentByte))
             {
+                // Consume the separator
                 Advance();
+                // Next up should be a Direction
+                if (IsLetter(Peek()))
+                {
+                    // Consume
+                    Advance();
+                }
+                // And then the next separator...
+                if (IsSeparator(_currentByte))
+                {
+                    Advance();
+                }
+                else
+                {
+                    throw Error();
+                }
+
+                return Double.NaN;
             }
+
+            var start = _index;
+            Advance(() => _currentByte > 0 && IsNumber(_currentByte));
 
             var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
             if (slice.Length < 4)
@@ -349,14 +373,13 @@ namespace DKW.NMEA.Parsing
                 if (slice.Slice(3).TryParse(out Double d))
                 {
                     Advance(); // Eat the separator
-                    if (_currentByte == 'E')
+                    var c = NextChar();  // Also consumes next separator
+                    if (c == 'E')
                     {
-                        Advance(); // Eat the E
                         return i + d / 60;
                     }
-                    else if (_currentByte == 'W')
+                    else if (c == 'W')
                     {
-                        Advance(); // Eat the W
                         return (i + d / 60) * -1;
                     }
                 }
@@ -365,44 +388,25 @@ namespace DKW.NMEA.Parsing
             throw Error();
         }
 
-        private TimeSpan TimeSpan()
+        public DateTime NextDate()
         {
-            var start = _index;
-            while (_currentByte > 0 && IsNumber(_currentByte))
+            ConsumeWhiteSpace();
+            if (IsSeparator(_currentByte))
             {
+                // Consume the separator
                 Advance();
+                return DateTime.MinValue;
             }
+
+            var start = _index;
+            Advance(() => _currentByte > 0 && IsNumber(_currentByte));
 
             var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
-
-            if (slice.Length < 6)
+            if (slice.Length == 0)
             {
-                return System.TimeSpan.Zero;
+                // This should never happen
+                throw ZeroLength();
             }
-
-            if (slice.Slice(0, 2).TryParse(out Int32 hours))
-            {
-                if (slice.Slice(2, 2).TryParse(out Int32 mintues))
-                {
-                    if (slice.Slice(4).TryParse(out Double seconds))
-                    {
-                        return new TimeSpan(hours, mintues, 0).Add(System.TimeSpan.FromSeconds(seconds));
-                    }
-                }
-            }
-
-            throw Error();
-        }
-
-        private DateTime Date()
-        {
-            var start = _index;
-            while (_currentByte > 0 && IsNumber(_currentByte))
-            {
-                Advance();
-            }
-
-            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
 
             if (slice.Length < 6)
             {
@@ -415,16 +419,53 @@ namespace DKW.NMEA.Parsing
                 {
                     if (slice.Length == 6 && slice.Slice(4, 2).TryParse(out Int32 twoDigitYear))
                     {
+                        // Consume the separator
+                        Advance();
                         return new DateTime(CultureInfo.CurrentCulture.Calendar.ToFourDigitYear(twoDigitYear), months, days);
                     }
                     else if (slice.Length == 8 && slice.Slice(4, 4).TryParse(out Int32 fourDigitYear))
                     {
+                        // Consume the separator
+                        Advance();
                         return new DateTime(fourDigitYear, months, days);
                     }
                 }
             }
 
             throw Error();
+        }
+
+        public Int32 NextChecksum()
+        {
+            ConsumeToChecksum();
+            return NextHexadecimal();
+        }
+
+        private Boolean IsWhiteSpace(Byte b) => b == ' ' || b == '\t';
+        private Boolean IsSeparator(Byte b) => b == ',' || b == '*' || b == '$';
+        private Boolean IsDigit(Byte b) => (b >= '0' && b <= '9');
+        private Boolean IsNumber(Byte b) => (b >= '0' && b <= '9') || b == '-' || b == '.';
+        private Boolean IsLetter(Byte b) => (b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z');
+
+        private void ConsumeWhiteSpace() => Advance(() => _currentByte != 0 && IsWhiteSpace(_currentByte));
+
+        private void ConsumeWhiteSpaceAndSeparator()
+        {
+            ConsumeWhiteSpace();
+
+            if (IsSeparator(_currentByte))
+            {
+                // Consume the separator
+                Advance();
+            }
+        }
+
+        private void ConsumeToChecksum()
+        {
+            Start();
+            Advance(() => _currentByte != 0 && _currentByte != '*');
+            // Consume the separator
+            Advance();
         }
     }
 }

@@ -47,5 +47,72 @@ namespace DNW.NMEA.Tests.Parsers.GPS
             rmc.Direction.ShouldBe('W');
             rmc.Checksum.ShouldBe(0x47);
         }
+
+
+        [Fact]
+        public void UBlox_G70xx_happy_path()
+        {
+            var bytes = Encoding.UTF8.GetBytes("$GPRMC,182630.00,A,4955.65790,N,11926.34845,W,0.045,,051218,,,D*64\r\n");
+            var buffer = new ReadOnlySequence<Byte>(bytes);
+
+            var rmc = new RMC().Parse(buffer) as RMC;
+
+            rmc.ShouldNotBeNull();
+            rmc.FixTime.ShouldBe(new TimeSpan(18, 26, 30));
+            rmc.Status.ShouldBe('A');
+            rmc.Latitude.ShouldBe(49.9276317d, 0.0000001d);
+            rmc.Longitude.ShouldBe(-119.4391408d, 0.0000001d);
+            rmc.SpeedOverGround.ShouldBe(0.045d);
+            rmc.TrackAngle.ShouldBe(Double.NaN);
+            rmc.Date.ShouldBe(new DateTime(2018, 12, 5));
+            rmc.MagneticVariation.ShouldBe(Double.NaN);
+            rmc.Direction.ShouldBe(Char.MinValue);
+            rmc.Mode.ShouldBe('D');
+            rmc.Checksum.ShouldBe(0x64);
+        }
+
+        [Fact]
+        public void UBlox_G70xx_incomplete_fix()
+        {
+            var bytes = Encoding.UTF8.GetBytes("$GPRMC,174114.00,V,,,,,,,051218,,,N*74\r\n");
+            var buffer = new ReadOnlySequence<Byte>(bytes);
+
+            var rmc = new RMC().Parse(buffer) as RMC;
+
+            rmc.ShouldNotBeNull();
+            rmc.FixTime.ShouldBe(new TimeSpan(17, 41, 14));
+            rmc.Status.ShouldBe('V');
+            rmc.Latitude.ShouldBe(Double.NaN);
+            rmc.Longitude.ShouldBe(Double.NaN);
+            rmc.SpeedOverGround.ShouldBe(Double.NaN);
+            rmc.TrackAngle.ShouldBe(Double.NaN);
+            rmc.Date.ShouldBe(new DateTime(2018, 12, 5));
+            rmc.MagneticVariation.ShouldBe(Double.NaN);
+            rmc.Direction.ShouldBe(Char.MinValue);
+            rmc.Mode.ShouldBe('N');
+            rmc.Checksum.ShouldBe(0x74);
+        }
+
+        [Fact]
+        public void NovAtel_happy_path()
+        {
+            var bytes = Encoding.UTF8.GetBytes("$GPRMC,144326.00,A,5107.0017737,N,11402.3291611,W,0.080,323.3,210307,0.0,E,A*20\r\n");
+            var buffer = new ReadOnlySequence<Byte>(bytes);
+
+            var rmc = new RMC().Parse(buffer) as RMC;
+
+            rmc.ShouldNotBeNull();
+            rmc.FixTime.ShouldBe(new TimeSpan(14, 43, 26));
+            rmc.Status.ShouldBe('A');
+            rmc.Latitude.ShouldBe(51.1166962283333d, 0.0000001d);
+            rmc.Longitude.ShouldBe(-114.038819351667d, 0.0000001d);
+            rmc.SpeedOverGround.ShouldBe(0.080d);
+            rmc.TrackAngle.ShouldBe(323.3);
+            rmc.Date.ShouldBe(new DateTime(2007, 03, 21));
+            rmc.MagneticVariation.ShouldBe(0.0);
+            rmc.Direction.ShouldBe('E');
+            rmc.Mode.ShouldBe('A');
+            rmc.Checksum.ShouldBe(0x20);
+        }
     }
 }

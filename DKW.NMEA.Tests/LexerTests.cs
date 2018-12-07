@@ -28,91 +28,9 @@ namespace DKW.NMEA.Tests
     public class LexerTests
     {
         [Fact]
-        public void NextToken_ReturnsCorrectTokenTypes()
-        {
-            var bytes = Encoding.UTF8.GetBytes("$GPGGA,232608.000,5057.1975,N,11134.8332,W,2,8,1.06,781.7,M,-18.1,M,0000,0000*62\r\n");
-            var buffer = new ReadOnlySequence<Byte>(bytes);
-            var lexer = new Lexer(buffer);
-
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Dollar);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.String);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.String);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.String);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.String);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.String);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Asterisk);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Number);
-        }
-
-        [Fact]
-        public void NextToken_ReturnsCorrectTokenValues()
-        {
-            var bytes = Encoding.UTF8.GetBytes("$GPGGA,232608.000,5057.1975,N,11134.8332,W,2,8,1.06,781.7,M,-18.1,M,0000,0000*62\r\n");
-            var buffer = new ReadOnlySequence<Byte>(bytes);
-            var lexer = new Lexer(buffer);
-
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Dollar);
-            lexer.NextToken().String.ShouldBe("GPGGA");
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(232608.0);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(5057.1975);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().String.ShouldBe("N");
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(11134.8332);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().String.ShouldBe("W");
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(2);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(8);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(1.06);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(781.7);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().String.ShouldBe("M");
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(-18.1);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().String.ShouldBe("M");
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(0);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Comma);
-            lexer.NextToken().Number.ShouldBe(0);
-            lexer.NextToken().TokenType.ShouldBe(TokenType.Asterisk);
-            lexer.NextToken().Number.ShouldBe(62);
-        }
-
-        [Fact]
         public void NextValue_methods_should_return_correct_values()
         {
-            var bytes = Encoding.UTF8.GetBytes("$BLARGH,232608.000,5057.1975,N,11134.8332,W,2,,781.7,M,161074*62\r\n");
+            var bytes = Encoding.UTF8.GetBytes("$BLARGH,232608.000,5057.1975,N,11134.8332,W,2,,781.7,M,161074,FF*62\r\n");
             var buffer = new ReadOnlySequence<Byte>(bytes);
             var lexer = new Lexer(buffer);
 
@@ -125,7 +43,20 @@ namespace DKW.NMEA.Tests
             lexer.NextDouble().ShouldBe(781.7);
             lexer.NextChar().ShouldBe('M');
             lexer.NextDate().ShouldBe(new DateTime(1974, 10, 16));
-            lexer.NextHexadecimal().ShouldBe(0x62);
+            lexer.NextHexadecimal().ShouldBe(0xff);
+            lexer.NextChecksum().ShouldBe(0x62);
+        }
+
+        [Fact]
+        public void Advancing_past_the_end_throws()
+        {
+            var bytes = Encoding.UTF8.GetBytes("$BLARGH,,*62\r\n");
+            var buffer = new ReadOnlySequence<Byte>(bytes);
+            var lexer = new Lexer(buffer);
+
+            lexer.NextString().ShouldBe("BLARGH");
+            lexer.NextDouble().ShouldBe(Double.NaN);
+            lexer.NextChecksum().ShouldBe(0x62);
         }
     }
 }
