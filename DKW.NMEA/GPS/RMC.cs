@@ -37,6 +37,7 @@ namespace DKW.NMEA.GPS
         public DateTime Date { get; private set; }
         public Double MagneticVariation { get; private set; }
         public Char Direction { get; private set; }
+        public Char Mode { get; private set; }
 
         public override String ToString() => $"GPRMC {FixTime} {Status} {Latitude} {Longitude} {SpeedOverGround} {TrackAngle} {Date} {MagneticVariation} {Direction}";
 
@@ -60,6 +61,7 @@ namespace DKW.NMEA.GPS
                 Date = lexer.NextDate(),
                 MagneticVariation = lexer.NextDouble(),
                 Direction = lexer.NextChar(),
+                Mode = lexer.NextChar(),
                 Checksum = lexer.NextChecksum()
             };
         }

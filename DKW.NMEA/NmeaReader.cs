@@ -28,14 +28,15 @@ namespace DKW.NMEA
     {
         private readonly BufferBlock<NmeaMessage> _queue = new BufferBlock<NmeaMessage>();
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-        private readonly NmeaStreamReader _nmeaStreamReader = NmeaStreamReader.Create();
+        private readonly NmeaStreamReader _nmeaStreamReader;
         private readonly Object _syncroot = new Object();
         private readonly Stream _stream;
 
         private Task _task;
 
-        public NmeaReader(Stream stream)
+        public NmeaReader(NmeaStreamReader nmeaStreamReader, Stream stream)
         {
+            _nmeaStreamReader = nmeaStreamReader ?? throw new ArgumentNullException(nameof(nmeaStreamReader));
             _stream = stream ?? throw new ArgumentNullException(nameof(stream));
         }
 

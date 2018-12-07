@@ -23,9 +23,9 @@ namespace DKW.NMEA
     using System.Collections.Generic;
     using System.IO;
     using System.IO.Pipelines;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using DKW.NMEA.GPS;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.Abstractions;
 
@@ -43,19 +43,6 @@ namespace DKW.NMEA
         public NmeaStreamReader(ILogger<NmeaStreamReader> logger = null)
         {
             _logger = logger ?? new NullLogger<NmeaStreamReader>();
-        }
-
-        public static NmeaStreamReader Create(ILogger<NmeaStreamReader> logger = null)
-        {
-            var nsr = new NmeaStreamReader(logger);
-
-            nsr.Register(new GGA());
-            nsr.Register(new GSA());
-            nsr.Register(new GSV());
-            nsr.Register(new RMC());
-            nsr.Register(new GLL());
-
-            return nsr;
         }
 
         public NmeaStreamReader Register(params NmeaMessage[] parsers)
@@ -170,9 +157,9 @@ namespace DKW.NMEA
             reader.Complete();
         }
 
-        private Boolean ParseSentence(ReadOnlySequence<Byte> payload, out NmeaMessage sentence)
+        private Boolean ParseSentence(ReadOnlySequence<Byte> payload, out NmeaMessage message)
         {
-            sentence = default;
+            message = default;
 
             LineCount++;
             BytesRead += payload.Length;
@@ -181,10 +168,13 @@ namespace DKW.NMEA
             {
                 if (p.CanHandle(payload))
                 {
-                    _logger.LogTrace($"Parsing Line {LineCount} with {p.GetType().Name}.");
+                    if (_logger.IsEnabled(LogLevel.Trace))
+                    {
+                        _logger.LogTrace($"Parsing Line {LineCount} with {p.GetType().Name}: {payload.ToString(Encoding.UTF8)}");
+                    }
                     try
                     {
-                        sentence = p.Parse(payload);
+                        message = p.Parse(payload);
                         return true;
                     }
                     catch (Exception ex)

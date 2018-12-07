@@ -55,17 +55,17 @@ namespace DKW.NMEA.GPS
                 SV1 = SV.Create(lexer.NextInteger(), lexer.NextInteger(), lexer.NextInteger(), lexer.NextInteger())
             };
 
-            if (lexer.Current() != '*')
+            if (!lexer.EOL)
             {
                 gsv.SV2 = SV.Create(lexer.NextInteger(), lexer.NextInteger(), lexer.NextInteger(), lexer.NextInteger());
             }
 
-            if (lexer.Current() != '*')
+            if (!lexer.EOL)
             {
                 gsv.SV3 = SV.Create(lexer.NextInteger(), lexer.NextInteger(), lexer.NextInteger(), lexer.NextInteger());
             }
 
-            if (lexer.Current() != '*')
+            if (!lexer.EOL)
             {
                 gsv.SV4 = SV.Create(lexer.NextInteger(), lexer.NextInteger(), lexer.NextInteger(), lexer.NextInteger());
             }

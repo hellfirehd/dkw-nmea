@@ -23,6 +23,7 @@ namespace Demo
     using System.Threading;
     using System.Threading.Tasks;
     using DKW.NMEA;
+    using DKW.NMEA.GPS;
 
     internal class Program
     {
@@ -33,8 +34,9 @@ namespace Demo
             Console.CancelKeyPress += new ConsoleCancelEventHandler(OnExitRequested);
 
             var count = 0L;
+            var nsr = new GpsNmeaStreamReaderFactory().Create();
 
-            using (var nr = new NmeaReader(RH.GetResourceStream("track2.nmea")))
+            using (var nr = new NmeaReader(nsr, RH.GetResourceStream("track1.nmea")))
             {
                 while (true)
                 {
@@ -47,7 +49,7 @@ namespace Demo
                 }
             }
 
-            using (var nr = new NmeaReader(RH.GetResourceStream("track2.nmea")))
+            using (var nr = new NmeaReader(nsr, RH.GetResourceStream("track2.nmea")))
             {
                 while (true)
                 {
@@ -60,8 +62,7 @@ namespace Demo
                 }
             }
 
-            var nsr = NmeaStreamReader.Create();
-            using (var reader = RH.GetResourceStream("track1.nmea"))
+            using (var reader = RH.GetResourceStream("track3.nmea"))
             {
                 await nsr.ParseStreamAsync(reader, (s) =>
                 {
