@@ -30,8 +30,11 @@ namespace DKW.NMEA.Parsing
 
         private ReadOnlySequence<Byte> _sequence;
         private Int64 _index;
+
+        // Don't use Auto Property for these... don't want the Property overhead.
         private Byte _currentByte;
         private Boolean _eol = false;
+
 #if DEBUG
         private Char _currentChar;
         private String _sentence;
@@ -47,7 +50,7 @@ namespace DKW.NMEA.Parsing
             Start();
         }
 
-        internal Exception Error() => new Exception($"Did not expect '{(Char)_currentByte}' at position {_index + 1}.");
+        public Exception Error() => new Exception($"Did not expect '{(Char)_currentByte}' at position {_index + 1}.");
         internal Exception ZeroLength() => new Exception($"Token with Zero length at position {_index + 1}.");
 
         private void Advance()
@@ -102,7 +105,8 @@ namespace DKW.NMEA.Parsing
         public Char NextChar()
         {
             ConsumeWhiteSpace();
-            if (IsSeparator(_currentByte)) {
+            if (IsSeparator(_currentByte))
+            {
                 // Consume the separator
                 Advance();
 
