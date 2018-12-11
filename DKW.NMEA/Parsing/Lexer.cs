@@ -47,7 +47,7 @@ namespace DKW.NMEA.Parsing
             Start();
         }
 
-        internal Exception Error() => new Exception($"Did not expect '{(Char)_currentByte}' at position {_index + 1}.");
+        public Exception Error() => new Exception($"Did not expect '{(Char)_currentByte}' at position {_index + 1}.");
         internal Exception ZeroLength() => new Exception($"Token with Zero length at position {_index + 1}.");
 
         private void Advance()
