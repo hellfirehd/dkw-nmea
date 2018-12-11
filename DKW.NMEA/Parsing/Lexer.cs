@@ -30,8 +30,11 @@ namespace DKW.NMEA.Parsing
 
         private ReadOnlySequence<Byte> _sequence;
         private Int64 _index;
+
+        // Don't use Auto Property for these... don't want the Property overhead.
         private Byte _currentByte;
         private Boolean _eol = false;
+
 #if DEBUG
         private Char _currentChar;
         private String _sentence;
@@ -102,7 +105,8 @@ namespace DKW.NMEA.Parsing
         public Char NextChar()
         {
             ConsumeWhiteSpace();
-            if (IsSeparator(_currentByte)) {
+            if (IsSeparator(_currentByte))
+            {
                 // Consume the separator
                 Advance();
 
