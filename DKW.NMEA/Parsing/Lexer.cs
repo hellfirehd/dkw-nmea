@@ -99,7 +99,7 @@ namespace DKW.NMEA.Parsing
         {
             _index = 0L;
             _currentByte = ByteAt(_index);
-            ConsumeWhiteSpaceAndSeparator();
+            ConsumeSeparator();
         }
 
         public Char NextChar()
@@ -107,18 +107,12 @@ namespace DKW.NMEA.Parsing
             ConsumeWhiteSpace();
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
-
+                ConsumeSeparator();
                 return Char.MinValue;
             }
 
             var c = (Char)_currentByte;
-            // Consume Character
-            Advance();
-
-            // Consume the separator
-            Advance();
+            ConsumeSeparator();
             return c;
         }
 
@@ -128,13 +122,12 @@ namespace DKW.NMEA.Parsing
 
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return String.Empty;
             }
 
             var start = _index;
-            Advance(() => _currentByte > 0 && IsLetter(_currentByte));
+            Advance(() => _currentByte > 0 && !IsSeparator(_currentByte));
 
             var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
             if (slice.Length == 0)
@@ -143,8 +136,7 @@ namespace DKW.NMEA.Parsing
                 throw ZeroLength();
             }
 
-            // Consume the separator
-            Advance();
+            ConsumeSeparator();
             return slice.ToString(Encoding.UTF8);
         }
 
@@ -154,8 +146,7 @@ namespace DKW.NMEA.Parsing
 
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return Double.NaN;
             }
 
@@ -171,8 +162,7 @@ namespace DKW.NMEA.Parsing
 
             if (slice.TryParse(out Double value))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return value;
             }
 
@@ -184,8 +174,7 @@ namespace DKW.NMEA.Parsing
             ConsumeWhiteSpace();
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return 0;
             }
 
@@ -201,8 +190,7 @@ namespace DKW.NMEA.Parsing
 
             if (slice.TryParse(out Int32 value))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return value;
             }
 
@@ -214,8 +202,7 @@ namespace DKW.NMEA.Parsing
             ConsumeWhiteSpace();
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return 0;
             }
 
@@ -231,8 +218,7 @@ namespace DKW.NMEA.Parsing
 
             if (slice.TryParseHex(out var value))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return value;
             }
 
@@ -244,8 +230,7 @@ namespace DKW.NMEA.Parsing
             ConsumeWhiteSpace();
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return TimeSpan.Zero;
             }
 
@@ -272,8 +257,7 @@ namespace DKW.NMEA.Parsing
                 {
                     if (slice.Slice(4).TryParse(out Double seconds))
                     {
-                        // Consume the separator
-                        Advance();
+                        ConsumeSeparator();
                         return new TimeSpan(hours, mintues, 0).Add(TimeSpan.FromSeconds(seconds));
                     }
                 }
@@ -287,8 +271,7 @@ namespace DKW.NMEA.Parsing
             ConsumeWhiteSpace();
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 // Next up should be a Direction
                 if (IsLetter(Peek()))
                 {
@@ -298,7 +281,7 @@ namespace DKW.NMEA.Parsing
                 // And then the next separator...
                 if (IsSeparator(_currentByte))
                 {
-                    Advance();
+                    ConsumeSeparator();
                 }
                 else
                 {
@@ -321,7 +304,7 @@ namespace DKW.NMEA.Parsing
             {
                 if (slice.Slice(2).TryParse(out Double d))
                 {
-                    Advance();
+                    ConsumeSeparator();
                     var c = NextChar();  // Also consumes next separator
                     if (c == 'N')
                     {
@@ -342,8 +325,7 @@ namespace DKW.NMEA.Parsing
             ConsumeWhiteSpace();
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 // Next up should be a Direction
                 if (IsLetter(Peek()))
                 {
@@ -353,7 +335,7 @@ namespace DKW.NMEA.Parsing
                 // And then the next separator...
                 if (IsSeparator(_currentByte))
                 {
-                    Advance();
+                    ConsumeSeparator();
                 }
                 else
                 {
@@ -376,7 +358,7 @@ namespace DKW.NMEA.Parsing
             {
                 if (slice.Slice(3).TryParse(out Double d))
                 {
-                    Advance(); // Eat the separator
+                    ConsumeSeparator();
                     var c = NextChar();  // Also consumes next separator
                     if (c == 'E')
                     {
@@ -397,8 +379,7 @@ namespace DKW.NMEA.Parsing
             ConsumeWhiteSpace();
             if (IsSeparator(_currentByte))
             {
-                // Consume the separator
-                Advance();
+                ConsumeSeparator();
                 return DateTime.MinValue;
             }
 
@@ -423,17 +404,45 @@ namespace DKW.NMEA.Parsing
                 {
                     if (slice.Length == 6 && slice.Slice(4, 2).TryParse(out Int32 twoDigitYear))
                     {
-                        // Consume the separator
-                        Advance();
+                        ConsumeSeparator();
                         return new DateTime(CultureInfo.CurrentCulture.Calendar.ToFourDigitYear(twoDigitYear), months, days);
                     }
                     else if (slice.Length == 8 && slice.Slice(4, 4).TryParse(out Int32 fourDigitYear))
                     {
-                        // Consume the separator
-                        Advance();
+                        ConsumeSeparator();
                         return new DateTime(fourDigitYear, months, days);
                     }
                 }
+            }
+
+            throw Error();
+        }
+
+        public DateTime NextDateTime()
+        {
+            ConsumeWhiteSpace();
+            if (IsSeparator(_currentByte))
+            {
+                ConsumeSeparator();
+                return DateTime.MinValue;
+            }
+
+            var start = _index;
+            Advance(() => _currentByte > 0 && IsDate(_currentByte));
+
+            var slice = _sequence.Slice(_sequence.GetPosition(start), _index - start);
+            if (slice.Length == 0)
+            {
+                // This should never happen
+                throw ZeroLength();
+            }
+
+            // Yes, I know this allocates.  I'm too lazy to write a DateTime parser that can handle ReadOnlySequence<Byte>
+            var value = slice.ToString(Encoding.UTF8);
+            if (DateTime.TryParse(value, out var result))
+            {
+                ConsumeSeparator();
+                return result;
             }
 
             throw Error();
@@ -446,22 +455,20 @@ namespace DKW.NMEA.Parsing
         }
 
         private Boolean IsWhiteSpace(Byte b) => b == ' ' || b == '\t';
-        private Boolean IsSeparator(Byte b) => b == ',' || b == '*' || b == '$';
+        private Boolean IsSeparator(Byte b) => b == ',' || b == '*' || b == '$' || b == '\r' || b == '\n';
         private Boolean IsDigit(Byte b) => (b >= '0' && b <= '9');
         private Boolean IsNumber(Byte b) => (b >= '0' && b <= '9') || b == '-' || b == '.';
         private Boolean IsLetter(Byte b) => (b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z');
+        private Boolean IsDate(Byte b) => IsNumber(b) || IsWhiteSpace(b) || b == '/' || b == ':';
 
         private void ConsumeWhiteSpace() => Advance(() => _currentByte != 0 && IsWhiteSpace(_currentByte));
 
-        private void ConsumeWhiteSpaceAndSeparator()
+        private void ConsumeSeparator()
         {
-            ConsumeWhiteSpace();
-
-            if (IsSeparator(_currentByte))
-            {
-                // Consume the separator
-                Advance();
-            }
+            // Consume up to the separator
+            Advance(() => !IsSeparator(_currentByte));
+            // Consume the separator
+            Advance();
         }
 
         private void ConsumeToChecksum()

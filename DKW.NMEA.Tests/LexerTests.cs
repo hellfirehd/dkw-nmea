@@ -30,7 +30,7 @@ namespace DKW.NMEA.Tests
         [Fact]
         public void NextValue_methods_should_return_correct_values()
         {
-            var bytes = Encoding.UTF8.GetBytes("$BLARGH,232608.000,5057.1975,N,11134.8332,W,2,,781.7,M,161074,FF*62\r\n");
+            var bytes = Encoding.UTF8.GetBytes("$BLARGH,232608.000,5057.1975,N,11134.8332,W,2,,781.7,M,161074,FF,2018/10/16 13:35:55*62\r\n");
             var buffer = new ReadOnlySequence<Byte>(bytes);
             var lexer = new Lexer(buffer);
 
@@ -44,6 +44,7 @@ namespace DKW.NMEA.Tests
             lexer.NextChar().ShouldBe('M');
             lexer.NextDate().ShouldBe(new DateTime(1974, 10, 16));
             lexer.NextHexadecimal().ShouldBe(0xff);
+            lexer.NextDateTime().ShouldBe(new DateTime(2018, 10, 16, 13, 35, 55));
             lexer.NextChecksum().ShouldBe(0x62);
         }
 
