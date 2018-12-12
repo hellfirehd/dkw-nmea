@@ -1,33 +1,20 @@
-image: Visual Studio 2017
-
-cache:
-  - C:\ProgramData\chocolatey\bin -> appveyor.yml
-  - C:\ProgramData\chocolatey\lib -> appveyor.yml
-
 install:
   - choco install gitversion.portable -pre -y
 
+assembly_info:
+  patch: false
+
 before_build:
-  # Display .NET Core version
-  - cmd: dotnet --version
-  # Display minimal restore text
-  - cmd: dotnet restore --verbosity m
+  - nuget restore
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 
-build_script:
-  - ps: $output = & gitversion /nofetch | Out-String
-  - ps: $version = $output | ConvertFrom-Json
-  - ps: $assemblyVersion = $version.AssemblySemver
-  - ps: $assemblyFileVersion = $version.AssemblySemver
-  - ps: $assemblyInformationalVersion = ($version.SemVer + "/" + $version.Sha)
-  - ps: $nugetVersion = $version.NuGetVersionV2
-  - ps: dotnet build -c Release /p:Version=$assemblyVersion /p:AssemblyVersion=$assemblyFileVersion
-  - ps: dotnet pack -c Release /p:Version=$assemblyVersion /p:PackageVersion=$nugetVersion
+build:
+  project: nmea.sln
 
-artifacts:
-- path: "./DKW.NMEA/**/*.nupkg"
-  name: NuGet
-
+after_build:
+  - cmd: ECHO nuget pack DKW.NMEA\DKW.NMEA.nuspec -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
+  - cmd: nuget pack DKW.NMEA\DKW.NMEA.nuspec -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
+  
 deploy:
   provider: NuGet
   api_key:
