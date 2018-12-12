@@ -11,10 +11,10 @@ before_build:
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 
 build:
-  project: DKW.NMEA\DKW.NMEA.csproj
+  - cmd: dotnet build DKW.NMEA\DKW.NMEA.csproj -c %CONFIGURATION% -version "%GitVersion_NuGetVersion%"
 
 after_build:
-  - cmd: nuget pack DKW.NMEA\DKW.NMEA.nuspec -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
+  - cmd: dotnet pack DKW.NMEA\DKW.NMEA.nuspec -c %CONFIGURATION% -version "%GitVersion_NuGetVersion%"
   
 deploy:
   provider: NuGet
