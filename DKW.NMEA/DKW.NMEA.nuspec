@@ -19,6 +19,6 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="D:\Source\dkw-nmea\DKW.NMEA\bin\Debug\netcoreapp2.1\DKW.NMEA.dll" target="lib\netcoreapp2.1\DKW.NMEA.dll" />
+    <file src=".\bin\Debug\netcoreapp2.1\DKW.NMEA.dll" target="lib\netcoreapp2.1\DKW.NMEA.dll" />
   </files>
 </package>
