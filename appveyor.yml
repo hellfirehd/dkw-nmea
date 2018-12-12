@@ -10,7 +10,7 @@ before_build:
   - nuget restore
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 
-build:
+build_script:
   - cmd: dotnet build DKW.NMEA\DKW.NMEA.csproj -c %CONFIGURATION% -version "%GitVersion_NuGetVersion%"
 
 after_build:
