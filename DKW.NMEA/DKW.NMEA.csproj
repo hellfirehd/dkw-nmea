@@ -3,7 +3,9 @@
   <PropertyGroup>
     <Version>0.0.0.1</Version>
     <AssemblyVersion>0.0.0.2</AssemblyVersion>
-    <AssemblyFileVersion>0.0.0.3</AssemblyFileVersion>
+    <FileVersion>0.0.0.3</FileVersion>
+    <InformationalVersion>0.0.0.4</InformationalVersion>
+    <PackageVersion>0.0.0.5</PackageVersion>
     <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <LangVersion>latest</LangVersion>
