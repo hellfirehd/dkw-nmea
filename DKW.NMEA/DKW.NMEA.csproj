@@ -3,9 +3,10 @@
   <PropertyGroup>
     <Version>0.0.0.1</Version>
     <AssemblyVersion>0.0.0.2</AssemblyVersion>
+    <AssemblyFileVersion>0.0.0.3</AssemblyFileVersion>
     <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>latest</LangVersion>
     <RootNamespace>DKW.NMEA</RootNamespace>
     <ApplicationIcon />
     <StartupObject />
@@ -13,7 +14,7 @@
     <Description>Reads a stream of NMEA sentences parsing it into NMEA objects</Description>
     <Copyright>2018 Doug Wilson</Copyright>
     <RepositoryType>Git</RepositoryType>
-    <RepositoryUrl>https://gitea.dkw.io/DKW</RepositoryUrl>
+    <RepositoryUrl>https://github.com/hellfirehd/dkw-nmea</RepositoryUrl>
     <PackageTags>GPS, NMEA</PackageTags>
     <Company>DKW</Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -22,14 +23,9 @@
     <AssemblyName>DKW.NMEA</AssemblyName>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <RootNamespace>DKW.NMEA</RootNamespace>
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="GitVersionTask" Version="4.0.1-beta1-50">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.2.0" />
     <PackageReference Include="System.IO.Pipelines" Version="4.5.2" />
   </ItemGroup>
