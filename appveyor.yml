@@ -1,6 +1,8 @@
 install:
   - choco install gitversion.portable -pre -y
 
+configuration: Release
+
 assembly_info:
   patch: false
 
@@ -9,10 +11,9 @@ before_build:
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 
 build:
-  project: nmea.sln
+  project: DKW.NMEA\DKW.NMEA.csproj
 
 after_build:
-  - cmd: ECHO nuget pack DKW.NMEA\DKW.NMEA.nuspec -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
   - cmd: nuget pack DKW.NMEA\DKW.NMEA.nuspec -version "%GitVersion_NuGetVersion%" -prop "target=%CONFIGURATION%"
   
 deploy:
