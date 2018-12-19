@@ -60,7 +60,7 @@ namespace DKW.NMEA
             return this;
         }
 
-        public async Task ParseStreamAsync(Stream stream, Action<NmeaMessage> callback, CancellationToken cancellationToken = default)
+        public async Task<ExitReason> ParseStreamAsync(Stream stream, Action<NmeaMessage> callback, CancellationToken cancellationToken = default)
         {
             if (_parsers.Count == 0)
             {
@@ -72,6 +72,11 @@ namespace DKW.NMEA
             var reading = ReadPipeAsync(pipe.Reader, callback, cancellationToken);
 
             await Task.WhenAll(reading, writing).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested) return ExitReason.CancellationRequested;
+            if (_unparsedSequenceLength >= AbortAfterUnparsedLines) return ExitReason.TooManySequentialUnparsedLines;
+
+            return ExitReason.Normal;
         }
 
         private async Task FillPipeAsync(Stream stream, PipeWriter writer, CancellationToken cancellationToken = default)
