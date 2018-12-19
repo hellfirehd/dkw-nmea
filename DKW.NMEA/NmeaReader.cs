@@ -27,11 +27,11 @@ namespace DKW.NMEA
     public class NmeaReader : IDisposable
     {
         private readonly BufferBlock<NmeaMessage> _queue = new BufferBlock<NmeaMessage>();
-        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly NmeaStreamReader _nmeaStreamReader;
         private readonly Object _syncroot = new Object();
         private readonly Stream _stream;
 
+        private CancellationTokenSource _cts = new CancellationTokenSource();
         private Task _task;
 
         public NmeaReader(NmeaStreamReader nmeaStreamReader, Stream stream)
@@ -88,6 +88,8 @@ namespace DKW.NMEA
             _cts.Cancel();
             _task.Dispose();
             _task = null;
+            _cts.Dispose();
+            _cts = null;
         }
     }
 }

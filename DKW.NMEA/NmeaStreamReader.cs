@@ -32,12 +32,15 @@ namespace DKW.NMEA
     public class NmeaStreamReader
     {
         public static Byte ByteLF = (Byte)'\n';
-        private List<NmeaMessage> _parsers = new List<NmeaMessage>();
         private readonly ILogger<NmeaStreamReader> _logger;
+        private List<NmeaMessage> _parsers = new List<NmeaMessage>();
+        private Int32 _unparsedSequenceLength = 0;
 
         public Int32 LineCount { get; private set; }
         public Int64 BytesReceived { get; private set; }
         public Int64 BytesRead { get; private set; }
+
+        public Int32 AbortAfterUnparsedLines { get; set; } = 0;
 
 
         public NmeaStreamReader(ILogger<NmeaStreamReader> logger = null)
@@ -74,7 +77,7 @@ namespace DKW.NMEA
         private async Task FillPipeAsync(Stream stream, PipeWriter writer, CancellationToken cancellationToken = default)
         {
             const Int32 minimumBufferSize = 512;
-            while (true)
+            while (AbortAfterUnparsedLines == 0 || _unparsedSequenceLength < AbortAfterUnparsedLines)
             {
                 try
                 {
@@ -110,7 +113,7 @@ namespace DKW.NMEA
 
         private async Task ReadPipeAsync(PipeReader reader, Action<NmeaMessage> callback, CancellationToken cancellationToken = default)
         {
-            while (true)
+            while (AbortAfterUnparsedLines == 0 || _unparsedSequenceLength < AbortAfterUnparsedLines)
             {
                 try
                 {
@@ -175,6 +178,7 @@ namespace DKW.NMEA
                     try
                     {
                         message = p.Parse(payload);
+                        _unparsedSequenceLength = 0;
                         return true;
                     }
                     catch (Exception ex)
@@ -186,6 +190,7 @@ namespace DKW.NMEA
                 }
             }
 
+            _unparsedSequenceLength++;
             return false;
         }
     }
