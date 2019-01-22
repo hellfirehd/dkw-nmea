@@ -10,12 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="gf.log" />
     <None Remove="track1.nmea" />
     <None Remove="track2.nmea" />
     <None Remove="track3.nmea" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="gf.log" />
     <EmbeddedResource Include="track3.nmea" />
   </ItemGroup>
 

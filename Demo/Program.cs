@@ -36,6 +36,14 @@ namespace Demo
             var count = 0L;
             var nsr = new GpsNmeaStreamReaderFactory().Create();
 
+            using (var reader = RH.GetResourceStream("gf.log"))
+            {
+                await nsr.ParseStreamAsync(reader, (s) =>
+                {
+                    Console.WriteLine($"Stage 0 {++count}: {s}");
+                }, _cancelationTokenSource.Token).ConfigureAwait(false);
+            }
+
             using (var nr = new NmeaReader(nsr, RH.GetResourceStream("track1.nmea")))
             {
                 while (true)

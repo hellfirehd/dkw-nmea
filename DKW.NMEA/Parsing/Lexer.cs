@@ -455,7 +455,7 @@ namespace DKW.NMEA.Parsing
         }
 
         private Boolean IsWhiteSpace(Byte b) => b == ' ' || b == '\t';
-        private Boolean IsSeparator(Byte b) => b == ',' || b == '*' || b == '$' || b == '\r' || b == '\n';
+        private Boolean IsSeparator(Byte b) => b == ',' || b == '*' || b == '$' || b == '\r' || b == '\n' || b == 0;
         private Boolean IsDigit(Byte b) => (b >= '0' && b <= '9');
         private Boolean IsNumber(Byte b) => (b >= '0' && b <= '9') || b == '-' || b == '.';
         private Boolean IsLetter(Byte b) => (b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z');

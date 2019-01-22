@@ -1,5 +1,6 @@
 ﻿namespace DKW.NMEA.GPS
 {
+    using DKW.NMEA.GasFinder;
     using Microsoft.Extensions.Logging;
 
     public class GpsNmeaStreamReaderFactory
@@ -13,6 +14,7 @@
             nsr.Register(new GSV());
             nsr.Register(new RMC());
             nsr.Register(new GLL());
+            nsr.Register(new GFDTA());
 
             return nsr;
         }
