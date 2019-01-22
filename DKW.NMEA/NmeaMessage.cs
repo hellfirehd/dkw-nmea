@@ -25,7 +25,16 @@ namespace DKW.NMEA
     {
         protected abstract ReadOnlyMemory<Byte> Key { get; }
 
-        public virtual Boolean CanHandle(ReadOnlySequence<Byte> sentence) => sentence.Slice(0, 6).IsMatch(Key.Span);
+        public virtual Boolean CanHandle(ReadOnlySequence<Byte> sentence)
+        {
+            if (sentence.Length == 0)
+            {
+                return false;
+            }
+
+            return sentence.Slice(0, 6).IsMatch(Key.Span);
+        }
+
         public abstract NmeaMessage Parse(ReadOnlySequence<Byte> sentence);
 
         /// <summary>
