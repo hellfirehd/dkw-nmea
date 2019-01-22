@@ -195,6 +195,11 @@ namespace DKW.NMEA
                 }
             }
 
+            if (_logger.IsEnabled(LogLevel.Trace))
+            {
+                _logger.LogTrace($"No parser found for Line {LineCount}: {payload.ToString(Encoding.UTF8)}");
+            }
+
             _unparsedSequenceLength++;
             return false;
         }
