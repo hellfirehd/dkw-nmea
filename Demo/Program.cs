@@ -25,7 +25,7 @@ namespace Demo
     using DKW.NMEA;
     using DKW.NMEA.GPS;
 
-    internal class Program
+    internal static class Program
     {
         private static readonly CancellationTokenSource _cancelationTokenSource = new CancellationTokenSource();
 

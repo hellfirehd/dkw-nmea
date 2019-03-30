@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2050
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28711.60
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8261043E-6E27-4F89-B946-E26F52A7E7F9}"
 	ProjectSection(SolutionItems) = preProject
@@ -18,6 +18,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DKW.NMEA.Tests", "DKW.NMEA.Tests\DKW.NMEA.Tests.csproj", "{E38AB09E-C3EA-4BB5-B12B-6084D0F0D7EE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo", "Demo\Demo.csproj", "{AA9EB20C-1C8F-4FB5-9836-B9A251243C87}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GpsDemo", "GpsDemo\GpsDemo.csproj", "{79717A8B-2AD8-47FF-9668-192F46B69C4F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +39,10 @@ Global
 		{AA9EB20C-1C8F-4FB5-9836-B9A251243C87}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA9EB20C-1C8F-4FB5-9836-B9A251243C87}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA9EB20C-1C8F-4FB5-9836-B9A251243C87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79717A8B-2AD8-47FF-9668-192F46B69C4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79717A8B-2AD8-47FF-9668-192F46B69C4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79717A8B-2AD8-47FF-9668-192F46B69C4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79717A8B-2AD8-47FF-9668-192F46B69C4F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
