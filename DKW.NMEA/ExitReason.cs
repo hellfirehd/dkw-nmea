@@ -21,7 +21,9 @@ namespace DKW.NMEA
     public enum ExitReason
     {
         Normal,
+        StreamEnded,
         CancellationRequested,
-        TooManySequentialUnparsedLines
+        TooManySequentialUnparsedLines,
+        ReaderCompleted
     }
 }

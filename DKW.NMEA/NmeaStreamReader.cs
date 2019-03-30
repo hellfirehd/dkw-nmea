@@ -33,15 +33,15 @@ namespace DKW.NMEA
     {
         public static Byte ByteLF = (Byte)'\n';
         private readonly ILogger<NmeaStreamReader> _logger;
-        private List<NmeaMessage> _parsers = new List<NmeaMessage>();
-        private Int32 _unparsedSequenceLength = 0;
+        private readonly List<NmeaMessage> _parsers = new List<NmeaMessage>();
+        private Int32 _unparsedSequenceLength;
+        private ExitReason _exitReason;
 
         public Int32 LineCount { get; private set; }
         public Int64 BytesReceived { get; private set; }
         public Int64 BytesRead { get; private set; }
 
         public Int32 AbortAfterUnparsedLines { get; set; } = 0;
-
 
         public NmeaStreamReader(ILogger<NmeaStreamReader> logger = null)
         {
@@ -51,9 +51,14 @@ namespace DKW.NMEA
         public NmeaStreamReader Register(params NmeaMessage[] parsers)
         {
             if (parsers == null)
+            {
                 throw new ArgumentNullException(nameof(parsers));
+            }
+
             if (parsers.Length == 0)
+            {
                 throw new ArgumentException("At least one parser must be provided.", nameof(parsers));
+            }
 
             _parsers.AddRange(parsers);
 
@@ -73,17 +78,25 @@ namespace DKW.NMEA
 
             await Task.WhenAll(reading, writing).ConfigureAwait(false);
 
-            if (cancellationToken.IsCancellationRequested) return ExitReason.CancellationRequested;
-            if (_unparsedSequenceLength >= AbortAfterUnparsedLines) return ExitReason.TooManySequentialUnparsedLines;
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return ExitReason.CancellationRequested;
+            }
 
-            return ExitReason.Normal;
+            return _exitReason;
         }
 
         private async Task FillPipeAsync(Stream stream, PipeWriter writer, CancellationToken cancellationToken = default)
         {
             const Int32 minimumBufferSize = 512;
-            while (AbortAfterUnparsedLines == 0 || _unparsedSequenceLength < AbortAfterUnparsedLines)
+            while (true)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    _exitReason = ExitReason.CancellationRequested;
+                    break;
+                }
+
                 try
                 {
                     // Allocate at least 512 bytes from the PipeWriter. NOTE: NMEA sentences must be less than 80 bytes.
@@ -93,6 +106,8 @@ namespace DKW.NMEA
                     BytesReceived += bytesRead;
                     if (bytesRead == 0)
                     {
+                        _logger.LogTrace("FillPipeAsync: Stream Ended");
+                        _exitReason = ExitReason.StreamEnded;
                         break;
                     }
 
@@ -101,13 +116,15 @@ namespace DKW.NMEA
 
                     // Make the data available to the PipeReader
                     var result = await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                    if (result.IsCompleted || cancellationToken.IsCancellationRequested)
+                    if (result.IsCompleted)
                     {
+                        _logger.LogTrace("FillPipeAsync: Reader is Completed");
                         break;
                     }
                 }
                 catch (OperationCanceledException)
                 {
+                    _exitReason = ExitReason.CancellationRequested;
                     break;
                 }
             }
@@ -118,7 +135,7 @@ namespace DKW.NMEA
 
         private async Task ReadPipeAsync(PipeReader reader, Action<NmeaMessage> callback, CancellationToken cancellationToken = default)
         {
-            while (AbortAfterUnparsedLines == 0 || _unparsedSequenceLength < AbortAfterUnparsedLines)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
@@ -150,13 +167,21 @@ namespace DKW.NMEA
                     reader.AdvanceTo(buffer.Start, buffer.End);
 
                     // Stop reading if there's no more data coming
-                    if (result.IsCompleted || cancellationToken.IsCancellationRequested)
+                    if (result.IsCompleted)
                     {
+                        _logger.LogTrace("ReadPipeAsync: Writer is Completed");
                         break;
                     }
                 }
                 catch (OperationCanceledException)
                 {
+                    break;
+                }
+
+                if (AbortAfterUnparsedLines != 0 && _unparsedSequenceLength >= AbortAfterUnparsedLines)
+                {
+                    _logger.LogTrace("ReadPipeAsync: Sequntial Unparsed Lines: {0}  Limit: {1}", _unparsedSequenceLength, AbortAfterUnparsedLines);
+                    _exitReason = ExitReason.TooManySequentialUnparsedLines;
                     break;
                 }
             }
@@ -172,23 +197,23 @@ namespace DKW.NMEA
             LineCount++;
             BytesRead += payload.Length;
 
-            foreach (var p in _parsers)
+            foreach (var parser in _parsers)
             {
-                if (p.CanHandle(payload))
+                if (CanHandle(payload, parser))
                 {
                     if (_logger.IsEnabled(LogLevel.Trace))
                     {
-                        _logger.LogTrace($"Parsing Line {LineCount} with {p.GetType().Name}: {payload.ToString(Encoding.UTF8)}");
+                        _logger.LogTrace($"Parsing Line {LineCount} with {parser.GetType().Name}: {payload.ToString(Encoding.UTF8)}");
                     }
                     try
                     {
-                        message = p.Parse(payload);
+                        message = parser.Parse(payload);
                         _unparsedSequenceLength = 0;
                         return true;
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"Error Processing Line {LineCount}.");
+                        _logger.LogError(ex, $"Line {LineCount} caused {parser.GetType().Name}.Parse({payload.ToString(Encoding.UTF8)}) to generate the following exception:");
                     }
 
                     break;
@@ -201,6 +226,23 @@ namespace DKW.NMEA
             }
 
             _unparsedSequenceLength++;
+            return false;
+        }
+
+        private Boolean CanHandle(ReadOnlySequence<Byte> payload, NmeaMessage parser)
+        {
+            try
+            {
+                if (parser.CanHandle(payload))
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"{parser.GetType().Name}.CanHandle({payload.ToString(Encoding.UTF8)}) generated the following exception:");
+            }
+
             return false;
         }
     }
