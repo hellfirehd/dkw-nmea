@@ -27,7 +27,7 @@ namespace DKW.NMEA
 
         public virtual Boolean CanHandle(ReadOnlySequence<Byte> sentence)
         {
-            if (sentence.Length == 0)
+            if (sentence.Length == 0 || sentence.Length < Key.Span.Length)
             {
                 return false;
             }
