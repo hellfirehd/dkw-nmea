@@ -7,6 +7,7 @@
     <Authors>Doug Wilson</Authors>
     <NeutralLanguage>en-US</NeutralLanguage>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Version>1.0.0.9-dev0005</Version>
   </PropertyGroup>
 
