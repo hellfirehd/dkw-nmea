@@ -1,40 +1,34 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <Version>0.0.0.1</Version>
-    <AssemblyVersion>0.0.0.2</AssemblyVersion>
-    <FileVersion>0.0.0.3</FileVersion>
-    <InformationalVersion>0.0.0.4</InformationalVersion>
-    <PackageVersion>0.0.0.5</PackageVersion>
-    <OutputType>Library</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <RootNamespace>DKW.NMEA</RootNamespace>
-    <ApplicationIcon />
-    <StartupObject />
-    <Authors>Doug Wilson</Authors>
-    <Description>Reads a stream of NMEA sentences parsing it into NMEA objects</Description>
-    <Copyright>2018 Doug Wilson</Copyright>
-    <RepositoryType>Git</RepositoryType>
-    <RepositoryUrl>https://github.com/hellfirehd/dkw-nmea</RepositoryUrl>
-    <PackageTags>GPS, NMEA</PackageTags>
-    <Company>DKW</Company>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://www.gnu.org/licenses/gpl.html</PackageLicenseUrl>
-    <AssemblyName>DKW.NMEA</AssemblyName>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  </PropertyGroup>
-  
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.2.0" />
-    <PackageReference Include="System.IO.Pipelines" Version="4.5.3" />
-  </ItemGroup>
+	<PropertyGroup>
+		<RootNamespace>DKW.NMEA</RootNamespace>
+		<TargetFrameworks>net6.0;net8.0;net10.0</TargetFrameworks>
+		<LangVersion>latest</LangVersion>
 
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
+		<Authors>Doug Wilson</Authors>
+		<Description>Reads a stream of NMEA sentences parsing it into NMEA objects</Description>
+		<Company>DKW</Company>
+		<Copyright>2026 Doug Wilson</Copyright>
+
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/hellfirehd/dkw-nmea</RepositoryUrl>
+		<PackageTags>GPS, NMEA</PackageTags>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<License>https://www.gnu.org/licenses/gpl.html</License>
+		<AssemblyName>DKW.NMEA</AssemblyName>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.5" />
+		<PackageReference Include="System.IO.Pipelines" Version="9.0.5" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Properties\" />
+	</ItemGroup>
 
 </Project>

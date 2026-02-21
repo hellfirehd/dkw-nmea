@@ -5,7 +5,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RJCP.IO.Ports;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,7 +26,8 @@ namespace GpsDemo
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken = default)
         {
-            var portName = SerialPortStream.GetPortNames().First();
+            //var portName = SerialPortStream.GetPortNames().First();
+            var portName = "COM6"; // Replace with your actual port name
             _logger.LogInformation("Opening {0}", portName);
             using (var port = new SerialPortStream(portName))
             {

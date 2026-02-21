@@ -5,8 +5,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace GpsDemo
@@ -15,8 +13,6 @@ namespace GpsDemo
     {
         public static async Task Main(String[] args)
         {
-            var useConsole = Debugger.IsAttached || args.Contains("--console");
-
             var builder = new HostBuilder()
                 .ConfigureServices((hostContext, services) =>
                 {
@@ -26,17 +22,10 @@ namespace GpsDemo
                 .ConfigureLogging((hostingContext, logging) =>
                 {
                     logging.AddConsole();
-                    logging.SetMinimumLevel(LogLevel.Information);
+                    logging.SetMinimumLevel(LogLevel.Debug);
                 });
 
-            if (useConsole)
-            {
-                await builder.RunConsoleAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                await builder.RunAsServiceAsync().ConfigureAwait(false);
-            }
+            await builder.RunConsoleAsync().ConfigureAwait(false);
         }
     }
 }
